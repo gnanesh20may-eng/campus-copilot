@@ -1,5 +1,4 @@
-from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import chromadb
 from chromadb.config import Settings
@@ -7,10 +6,12 @@ from chromadb.utils import embedding_functions
 
 from app.services.embeddings import embed_texts
 
-DB_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "chroma_db"
-DB_DIR.mkdir(parents=True, exist_ok=True)
-
-client = chromadb.Client(Settings(chromadb_db_impl="duckdb+parquet", persist_directory=str(DB_DIR)))
+# Use an ephemeral in-memory Chroma client for Render deployments.
+# This avoids relying on a local persistent disk path that is not guaranteed
+# on Render's free web service filesystem.
+client = chromadb.Client(
+    Settings(chroma_db_impl="duckdb+parquet", is_persistent=False)
+)
 collection = client.get_or_create_collection(
     name="campus_documents",
     metadata={"description": "Ingested PDF chunks for Campus Copilot"},
@@ -33,4 +34,5 @@ def query_documents(query: str, n_results: int = 4) -> List[dict]:
 
 
 def persist():
-    client.persist()
+    # No-op for in-memory mode; persistence is intentionally disabled on Render.
+    return None
