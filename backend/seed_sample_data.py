@@ -1,6 +1,7 @@
 from app.db.vector_store import add_documents, persist
 
-if __name__ == "__main__":
+
+def seed_sample_data():
     texts = [
         "The university exam timetable is published on the first Monday of the semester.",
         "Tuition fees are due by the 10th of each month for all students.",
@@ -15,3 +16,7 @@ if __name__ == "__main__":
     add_documents(texts, metadatas, ids)
     persist()
     print(f"Seeded {len(texts)} documents into ChromaDB.")
+
+
+if __name__ == "__main__":
+    seed_sample_data()
