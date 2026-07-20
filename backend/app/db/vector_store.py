@@ -1,26 +1,27 @@
-from typing import List
-
+﻿from typing import List
 import chromadb
-from chromadb.config import Settings
-from chromadb.utils import embedding_functions
-
 from app.services.embeddings import embed_texts
 
 # Use an ephemeral in-memory Chroma client for Render deployments.
 # This avoids relying on a local persistent disk path that is not guaranteed
-# on Render's free web service filesystem.
-client = chromadb.Client(
-    Settings(chroma_db_impl="duckdb+parquet", is_persistent=False)
-)
+# on Render's free web service filesystem, and avoids the deprecated
+# Settings()-based client construction used in older chromadb versions.
+client = chromadb.EphemeralClient()
+
 collection = client.get_or_create_collection(
     name="campus_documents",
     metadata={"description": "Ingested PDF chunks for Campus Copilot"},
-    embedding_function=embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2"),
 )
 
 
 def add_documents(texts: List[str], metadatas: List[dict], ids: List[str]):
-    return collection.add(documents=texts, metadatas=metadatas, ids=ids)
+    embeddings = embed_texts(texts)
+    return collection.add(
+        documents=texts,
+        metadatas=metadatas,
+        ids=ids,
+        embeddings=embeddings,
+    )
 
 
 def query_documents(query: str, n_results: int = 4) -> List[dict]:
